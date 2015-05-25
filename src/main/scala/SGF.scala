@@ -19,7 +19,7 @@ class SGF extends RegexParsers {
   def pProperty =
     pPropIdent >> {
       case pid @ PropIdent(id) => {
-        def propNone = "[" ~> """\s*""".r <~ "]" ^^ { case _ => Property(pid, List()) }
+        def propNone = "[" ~> """\s*""".r <~ "]" ^^^ { Property(pid, List()) }
         def prop1[T <: CValueType](p: Parser[T]) = "[" ~> p <~ "]" ^^ { case x => Property(pid, List(PropValue(x))) }
         def propList[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").+ ^^ { case xs => Property(pid, xs.map {PropValue(_)}) } 
         def propElist[T <: CValueType](p: Parser[T]) = propNone | propList(p)
@@ -35,7 +35,7 @@ class SGF extends RegexParsers {
         def propListOfPoint = propList(pCompressedPoint | pPoint) 
         def propElistOfPoint = propElist(pCompressedPoint | pPoint)
         def propUnknown = {
-          def pSkip = """(\w)*""".r ^^ { _ => Unknown }
+          def pSkip = """(\w)*""".r ^^^ { Unknown }
           propElist(pSkip) | prop1(pSkip)
         }
         id match {
@@ -165,6 +165,7 @@ class SGF extends RegexParsers {
   private def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
   private def pSimpleText1 = """[^:]+""".r ^^ { SimpleText(_) }
   private def pSimpleText = """[^]]+""".r ^^ { SimpleText(_) }
+  //private def pText = """[\][^]]]+""".r ^^ { Text(_) } // FIXME
   private def pText = """[^]]+""".r ^^ { Text(_) } // FIXME
   private def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
 }

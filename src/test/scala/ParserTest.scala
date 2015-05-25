@@ -49,6 +49,9 @@ class PropertyTest extends FunSuite {
     t("V[ +1]", Real(1))
     t("V[ -1 ]", Real(-1))
   }
+  test("C") {
+    t("""C[FF\[1\]]""", Text("""FF\[1\]"""))
+  }
   test("AP") {
     t("AP[Primiview:3.1]", Compose(SimpleText("Primiview"), SimpleText("3.1")))
   }
