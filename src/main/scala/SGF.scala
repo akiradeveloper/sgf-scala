@@ -19,7 +19,7 @@ class SGF extends RegexParsers {
   def pProperty =
     pPropIdent into {
       case pid @ PropIdent(id) => {
-        def propNone = "[]" ^^ { case _ => Property(pid, List()) }
+        def propNone = "[" ~> """\s*""".r <~ "]" ^^ { case _ => Property(pid, List()) }
         def prop1[T <: CValueType](p: Parser[T]) = "[" ~> p <~ "]" ^^ { case x => Property(pid, List(PropValue(x))) }
         def propList[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").+ ^^ { case xs => Property(pid, xs.map {PropValue(_)}) } 
         def propElist[T <: CValueType](p: Parser[T]) = propNone | propList(p)
@@ -151,11 +151,11 @@ class SGF extends RegexParsers {
     }
   }
   def pNumber = pNumber_ ^^ { Number(_) }
-  def pReal = pNumber_ ~ "." ~ rep1(pDigit) ^^ {
+  def pReal = pNumber_ ~ "." ~ rep1(pDigit) ^^ { // FIXME no decimal
     case int ~ "." ~ decimal => {
-      val a: Int = int
-      val b: Float = ("0." + concat(decimal)).toFloat
-      Real(a + b)
+      val a = int
+      val b = ("0." + concat(decimal)).toDouble
+      Real(if (a >= 0) a + b else a - b)
     }
   }
   def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
@@ -181,7 +181,7 @@ package sgf {
 
   // case object None extends ValueType
   case class Number(a: Int) extends ValueType
-  case class Real(a: Float) extends ValueType
+  case class Real(a: scala.Double) extends ValueType
   case class Double(a: Int) extends ValueType
   case class Color(a: Char) extends ValueType
   case class SimpleText(a: String) extends ValueType
