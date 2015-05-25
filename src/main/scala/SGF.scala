@@ -8,7 +8,7 @@ class SGF extends RegexParsers {
   def int(x: Char): Int = if (x > 'z') x-'A'+1 else x-'a'+1
   def char(x: Int): Char = (if (x > 26) 'A'+x-1 else 'a'+x-1).toChar
 
-  def concat(xs: List[String]) = xs.fold(""){(acc,e) => acc+e}
+  private def concat(xs: List[String]) = xs.fold(""){(acc,e) => acc+e}
 
   def pAll = pCollection
   def pCollection = pGameTree.+ ^^ { Collection(_) }
@@ -134,12 +134,12 @@ class SGF extends RegexParsers {
       }
     }
 
-  def pCompose[A <: ValueType, B <: ValueType](pa: Parser[A], pb: Parser[B]) = pa ~ ":" ~ pb ^^ { case x ~ ":" ~ y => Compose(x, y) }
+  private def pCompose[A <: ValueType, B <: ValueType](pa: Parser[A], pb: Parser[B]) = pa ~ ":" ~ pb ^^ { case x ~ ":" ~ y => Compose(x, y) }
 
   // def pNone = "" ^^ { _ => None }
-  def pUcLetter = """[A-Z]""".r
-  def pDigit = """[0-9]""".r
-  def pNumber_ = ("+"|"-"|"") ~ rep1(pDigit) ^^ {
+  private def pUcLetter = """[A-Z]""".r
+  private def pDigit = """[0-9]""".r
+  private def pNumber_ = ("+"|"-"|"") ~ rep1(pDigit) ^^ {
     case sig ~ digits => {
       val a: Int = sig match {
         case "+" => 1
@@ -150,8 +150,8 @@ class SGF extends RegexParsers {
       a * b
     }
   }
-  def pNumber = pNumber_ ^^ { Number(_) }
-  def pReal = pNumber_ ~ "." ~ rep1(pDigit) ^^ {
+  private def pNumber = pNumber_ ^^ { Number(_) }
+  private def pReal = pNumber_ ~ "." ~ rep1(pDigit) ^^ {
     case int ~ "." ~ decimal => {
       val a = int
       val b = ("0." + concat(decimal)).toDouble
@@ -161,12 +161,11 @@ class SGF extends RegexParsers {
       val Number(n) = x
       Real(n.toDouble)
   }
-
-  def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
-  def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
-  def pSimpleText = """\w+""".r ^^ { SimpleText(_) }
-  def pText = """\w+""".r ^^ { Text(_) } // FIXME
-  def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
+  private def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
+  private def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
+  private def pSimpleText = """\w+""".r ^^ { SimpleText(_) } // FIXME
+  private def pText = """\w+""".r ^^ { Text(_) } // FIXME
+  private def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
 }
 
 package sgf {
@@ -199,19 +198,5 @@ package sgf {
 
 object SGF extends SGF {
   def main(args: Array[String]) = {
-    // println(parseAll(pNone, ""))
-    println(parseAll(pDouble, "2"))
-    println(parseAll(pColor, "W"))
-    println(parseAll(pNumber, "-23"))
-    println(parseAll(pReal, "3.14"))
-    // println(parseAll(pAll, "00"))
-    println(parse(pProperty, "KO[]"))
-    println(parse(pProperty, "AB[ab][cd]"))
-    println(parse(pPoint, "ab"))
-    println(parse(pPropIdent, "KM[+0.5]"))
-    println(parseAll(pProperty, "KM[+0.5]"))
-    println(parseAll(pAll, "(;KM[+0.5])"))
-    println(parseAll(pProperty, "AB[aa:bb]"))
-    println(parse(pProperty, "ZZ[hoge ]"))
   }
 }
