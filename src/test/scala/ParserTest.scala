@@ -7,11 +7,11 @@ class PropertyTest extends FunSuite {
   def t(x: String, xs: CValueType*) = {
     val expected = xs.toList.map(PropValue(_))
     val res = SGF.parseAll(SGF.pProperty, x)
-    // println(res)
     if (res.successful) {
       val Property(_, actual) = res.get
       assert(actual === expected)
     } else {
+      println(res)
       assert(false)
     }
   }
@@ -49,6 +49,12 @@ class PropertyTest extends FunSuite {
     t("V[ +1]", Real(1))
     t("V[ -1 ]", Real(-1))
   }
+  test("AP") {
+    t("AP[Primiview:3.1]", Compose(SimpleText("Primiview"), SimpleText("3.1")))
+  }
+  test("FG") {
+    t("FG[257:Figure 1]", Compose(Number(257), SimpleText("Figure 1")))
+  }
 }
 
 class ParseFileTest extends FunSuite {
@@ -60,8 +66,12 @@ class ParseFileTest extends FunSuite {
     test(x + ".sgf") {
       val s = Source.fromURL(getClass.getResource("/" + x + ".sgf")).mkString
       val res = SGF.parseAll(SGF.pAll, s)
-      // println(res)
-      assert(res.successful)
+      if (res.successful) {
+        assert(true)
+      } else {
+        println(res)
+        assert(false)
+      }
     }
   }
 
