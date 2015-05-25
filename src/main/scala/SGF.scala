@@ -157,7 +157,11 @@ class SGF extends RegexParsers {
       val b = ("0." + concat(decimal)).toDouble
       Real(if (a >= 0) a + b else a - b)
     }
-  } | pNumber // no decimal
+  } | pNumber ^^ { case x =>
+      val Number(n) = x
+      Real(n.toDouble)
+  }
+
   def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
   def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
   def pSimpleText = """\w+""".r ^^ { SimpleText(_) }
