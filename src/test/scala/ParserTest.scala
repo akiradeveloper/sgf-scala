@@ -41,11 +41,12 @@ class PropertyTest extends FunSuite {
     t(" TE[2 ]", Double(2))
   }
   test("V") {
-    // t("   V[1]", Real(1))
-    // t(" V[ +1]", Real(1))
-    // t(" V[ -1 ]", Real(-1))
     t(" V[3.14]", Real(3.14))
     t(" V[+3.14 ]", Real(3.14))
     t(" V[ -3.14 ]", Real(-3.14))
+
+    t("   V[1]", Real(1))
+    t(" V[ +1]", Real(1))
+    t(" V[ -1 ]", Real(-1))
   }
 }
