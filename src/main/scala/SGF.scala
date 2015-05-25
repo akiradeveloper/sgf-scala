@@ -5,6 +5,9 @@ import scala.util.parsing.combinator._
 class SGF extends RegexParsers { 
   import sgf._
 
+  def int(x: Char): Int = if (x > 'z') x-'A'+1 else x-'a'+1
+  def char(x: Int): Char = (if (x > 26) 'A'+x-1 else 'a'+x-1).toChar
+
   def concat(xs: List[String]) = xs.fold(""){(acc,e) => acc+e}
 
   def pAll = pCollection
@@ -18,18 +21,23 @@ class SGF extends RegexParsers {
       case pid @ PropIdent(id) => {
         def propNone = "[]" ^^ { case _ => Property(pid, List()) }
         def prop1[T <: CValueType](p: Parser[T]) = "[" ~> p <~ "]" ^^ { case x => Property(pid, List(PropValue(x))) }
-        def propList[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").+ ^^ { case xs => Property(pid, xs.map {PropValue(_)}) }
-        def propElist[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").* ^^ { case xs => Property(pid, xs.map {PropValue(_)}) }
-        def propCompressedListOfPoint =  "[" ~ pPoint ~ ":" ~ pPoint ~ "]" ^^ {
-          case "[" ~ a ~ ":" ~ b ~ "]" => {
-            val (a0, a1) = intsof(a)
-            val (b0, b1) = intsof(b)
-            val xs = for (i <- List.range(a0, a1+1); j <- List.range(b0, b1+1)) yield (i,j) // FIXME (You need the board size)
-            Property(pid, xs.map { case x => PropValue(pointof(x)) })
-          }
-        }
+        def propList[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").+ ^^ { case xs => Property(pid, xs.map {PropValue(_)}) } 
+        def propElist[T <: CValueType](p: Parser[T]) = propNone | propList(p)
+        // def propCompressedListOfPoint =  "[" ~ pPoint ~ ":" ~ pPoint ~ "]" ^^ {
+        //   case "[" ~ a ~ ":" ~ b ~ "]" => {
+        //     val (a0, a1) = intsof(a)
+        //     val (b0, b1) = intsof(b)
+        //     val xs = for (i <- List.range(a0, a1+1); j <- List.range(b0, b1+1)) yield (i,j) // FIXME (You need the board size)
+        //     Property(pid, xs.map { case x => PropValue(pointof(x)) })
+        //   }
+        // }
+        def propCompressedListOfPoint = prop1(pCompose(pPoint, pPoint))
         def propListOfPoint = propCompressedListOfPoint | propList(pPoint) 
         def propElistOfPoint = propCompressedListOfPoint | propElist(pPoint)
+        def propUnknown = {
+          def pSkip = """(\w)*""".r ^^ { _ => Unknown }
+          propElist(pSkip) | prop1(pSkip)
+        }
         id match {
           // Move
           case "B" => prop1(pPoint)
@@ -119,6 +127,9 @@ class SGF extends RegexParsers {
           case "KM" => prop1(pReal)
           case "TB" => propElistOfPoint
           case "TW" => propElistOfPoint
+
+          // Unknown
+          case _  => propUnknown
         }
       }
     }
@@ -152,17 +163,10 @@ class SGF extends RegexParsers {
   def pSimpleText = """\w+""".r ^^ { SimpleText(_) }
   def pText = """\w+""".r ^^ { Text(_) } // FIXME
   def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
-  def intsof(p: Point): (Int, Int) = {
-    val Point(x, y) = p
-    (x-'a'+1, y-'a'+1)
-  }
-  def pointof(p: (Int, Int)): Point = {
-    val (x, y) = p
-    Point(('a'+x-1).toChar, ('a'+y-1).toChar)
-  }
 }
 
 package sgf {
+
   case class Collection(a: List[GameTree])
   case class GameTree(a: Sequence, b: List[GameTree])
   case class Sequence(a: List[Node])
@@ -187,6 +191,7 @@ package sgf {
   // In Go, Point, Move and Stone are the same
   // case class Move() extends ValueType
   // case class Stone() extends ValueType
+  case object Unknown extends ValueType
 }
 
 object SGF extends SGF {
@@ -204,5 +209,6 @@ object SGF extends SGF {
     println(parseAll(pProperty, "KM[+0.5]"))
     println(parseAll(pAll, "(;KM[+0.5])"))
     println(parseAll(pProperty, "AB[aa:bb]"))
+    println(parse(pProperty, "ZZ[hoge ]"))
   }
 }
