@@ -166,7 +166,6 @@ class SGF extends RegexParsers {
 }
 
 package sgf {
-
   case class Collection(a: List[GameTree])
   case class GameTree(a: Sequence, b: List[GameTree])
   case class Sequence(a: List[Node])
