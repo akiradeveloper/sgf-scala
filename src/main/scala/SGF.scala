@@ -151,13 +151,13 @@ class SGF extends RegexParsers {
     }
   }
   def pNumber = pNumber_ ^^ { Number(_) }
-  def pReal = pNumber_ ~ "." ~ rep1(pDigit) ^^ { // FIXME no decimal
+  def pReal = pNumber_ ~ "." ~ rep1(pDigit) ^^ {
     case int ~ "." ~ decimal => {
       val a = int
       val b = ("0." + concat(decimal)).toDouble
       Real(if (a >= 0) a + b else a - b)
     }
-  }
+  } | pNumber // no decimal
   def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
   def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
   def pSimpleText = """\w+""".r ^^ { SimpleText(_) }
