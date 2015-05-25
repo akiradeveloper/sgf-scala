@@ -81,7 +81,7 @@ class SGF extends RegexParsers {
           case "TR" => propListOfPoint
 
           // Root
-          case "AP" => prop1(pCompose(pSimpleText, pSimpleText))
+          case "AP" => prop1(pCompose(pSimpleText1, pSimpleText))
           case "CA" => prop1(pSimpleText)
           case "FF" => prop1(pNumber) // 1-4
           case "GM" => prop1(pNumber) // 1-16
@@ -163,8 +163,9 @@ class SGF extends RegexParsers {
   }
   private def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
   private def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
-  private def pSimpleText = """[^]]+""".r ^^ { SimpleText(_) } // FIXME
-  private def pText = """\w+""".r ^^ { Text(_) } // FIXME
+  private def pSimpleText1 = """[^:]+""".r ^^ { SimpleText(_) }
+  private def pSimpleText = """[^]]+""".r ^^ { SimpleText(_) }
+  private def pText = """[^]]+""".r ^^ { Text(_) } // FIXME
   private def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
 }
 
