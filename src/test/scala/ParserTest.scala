@@ -7,7 +7,7 @@ class PropertyTest extends FunSuite {
   def t(x: String, xs: CValueType*) = {
     val expected = xs.toList.map(PropValue(_))
     val res = SGF.parseAll(SGF.pProperty, x)
-    println(res)
+    // println(res)
     if (res.successful) {
       val Property(_, actual) = res.get
       assert(actual === expected)
@@ -37,16 +37,36 @@ class PropertyTest extends FunSuite {
     t("FF[ -3 ]", Number(-3))
   }
   test("TE") {
-    t(" TE[  1]", Double(1))
-    t(" TE[2 ]", Double(2))
+    t("TE[  1]", Double(1))
+    t("TE[2 ]", Double(2))
   }
   test("V") {
-    t(" V[3.14]", Real(3.14))
-    t(" V[+3.14 ]", Real(3.14))
-    t(" V[ -3.14 ]", Real(-3.14))
+    t("V[3.14]", Real(3.14))
+    t("V[+3.14 ]", Real(3.14))
+    t("V[ -3.14 ]", Real(-3.14))
 
-    t("   V[1]", Real(1))
-    t(" V[ +1]", Real(1))
-    t(" V[ -1 ]", Real(-1))
+    t("V[1]", Real(1))
+    t("V[ +1]", Real(1))
+    t("V[ -1 ]", Real(-1))
   }
+}
+
+class ParseFileTest extends FunSuite {
+  import sgf._
+
+  import scala.io.Source
+
+  def t(x: String) = {
+    test(x + ".sgf") {
+      val s = Source.fromURL(getClass.getResource("/" + x + ".sgf")).mkString
+      val res = SGF.parseAll(SGF.pAll, s)
+      // println(res)
+      assert(res.successful)
+    }
+  }
+
+  t("minimum")
+  t("ff4_ex")
+  t("print1")
+  t("print2")
 }
