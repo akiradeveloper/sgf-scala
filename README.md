@@ -1,7 +1,7 @@
 # sgf-scala
 Simple Game Format parser in Scala
 
-[Build Status](https://travis-ci.org/akiradeveloper/sgf-scala.svg?branch=master)](https://travis-ci.org/akiradeveloper/sgf-scala)
+[![Build Status](https://travis-ci.org/akiradeveloper/sgf-scala.svg?branch=master)](https://travis-ci.org/akiradeveloper/sgf-scala)
 
 ## What's SGF
 Simple Game Format or SGF is a defacto standard format
