@@ -17,6 +17,7 @@ class PropertyTest extends FunSuite {
   }
   test("B") {
     t("B[ ac]", Point('a','c'))
+    t("B[gc]", Point('g','c'))
   }
   test("VW") { // elist of point
     t("VW[]")
@@ -82,4 +83,5 @@ class ParseFileTest extends FunSuite {
   t("ff4_ex")
   t("print1")
   t("print2")
+  t("nhk_ex")
 }

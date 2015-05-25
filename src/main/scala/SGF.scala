@@ -165,8 +165,7 @@ class SGF extends RegexParsers {
   private def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
   private def pSimpleText1 = """[^:]+""".r ^^ { SimpleText(_) }
   private def pSimpleText = """[^]]+""".r ^^ { SimpleText(_) }
-  //private def pText = """[\][^]]]+""".r ^^ { Text(_) } // FIXME
-  private def pText = """[^]]+""".r ^^ { Text(_) } // FIXME
+  private def pText = """(\\]|[^]])+""".r ^^ { Text(_) } // FIXME
   private def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
 }
 
