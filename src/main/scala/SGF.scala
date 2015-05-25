@@ -16,39 +16,116 @@ class SGF extends RegexParsers {
   def pProperty =
     pPropIdent into {
       case pid @ PropIdent(id) => {
+        def propNone = "[]" ^^ { case _ => Property(pid, List()) }
         def prop1[T <: CValueType](p: Parser[T]) = "[" ~> p <~ "]" ^^ { case x => Property(pid, List(PropValue(x))) }
         def propList[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").+ ^^ { case xs => Property(pid, xs.map {PropValue(_)}) }
         def propElist[T <: CValueType](p: Parser[T]) = ("[" ~> p <~ "]").* ^^ { case xs => Property(pid, xs.map {PropValue(_)}) }
-        def propListOfPoint = propList(pPoint) // TODO compressed
-        def propEListOfPoint = propElist(pPoint)
+        def propCompressedListOfPoint =  "[" ~ pPoint ~ ":" ~ pPoint ~ "]" ^^ {
+          case "[" ~ a ~ ":" ~ b ~ "]" => {
+            val (a0, a1) = intsof(a)
+            val (b0, b1) = intsof(b)
+            val xs = for (i <- List.range(a0, a1+1); j <- List.range(b0, b1+1)) yield (i,j) // FIXME (You need the board size)
+            Property(pid, xs.map { case x => PropValue(pointof(x)) })
+          }
+        }
+        def propListOfPoint = propCompressedListOfPoint | propList(pPoint) 
+        def propElistOfPoint = propCompressedListOfPoint | propElist(pPoint)
         id match {
-          case "FF" => prop1(pNumber)
-          case "HA" => prop1(pNumber)
-          case "KM" => prop1(pReal)
+          // Move
+          case "B" => prop1(pPoint)
+          // case "KO" => pNone ^^ { case _ => Property(pid, List()) }
+          // case "KO" => prop1(pNone) // List(None) or List()?
+          case "KO" => propNone
+          case "NM" => prop1(pNumber)
+          case "W" => prop1(pPoint)
+
+          // Setup
           case "AB" => propListOfPoint
           case "AE" => propListOfPoint
           case "AW" => propListOfPoint
           case "PL" => prop1(pColor)
+          
+          // Node Annotation
+          case "C" => prop1(pText)
+          case "DM" => prop1(pDouble)
+          case "GB" => prop1(pDouble)
+          case "GW" => prop1(pDouble)
+          case "HO" => prop1(pDouble)
+          case "N" => prop1(pSimpleText)
+          case "UC" => prop1(pDouble)
+          case "V" => prop1(pReal)
+
+          // Move Annotation
+          case "BM" => prop1(pDouble)
+          case "DO" => propNone
+          case "IT" => propNone
+          case "TE" => prop1(pDouble)
+          
+          // Markup
+          case "AR" => propList(pCompose(pPoint, pPoint))
+          case "CR" => propListOfPoint
+          case "DD" => propElistOfPoint
+          case "LB" => propList(pCompose(pPoint, pSimpleText))
+          case "LN" => propList(pCompose(pPoint, pPoint))
+          case "MA" => propListOfPoint
+          case "SL" => propListOfPoint
+          case "SQ" => propListOfPoint
+          case "TR" => propListOfPoint
+
+          // Root
+          case "AP" => prop1(pCompose(pSimpleText, pSimpleText))
+          case "CA" => prop1(pSimpleText)
+          case "FF" => prop1(pNumber) // 1-4
+          case "GM" => prop1(pNumber) // 1-16
+          case "ST" => prop1(pNumber) // 0-3
+          case "SZ" => prop1(pNumber) | prop1(pCompose(pNumber, pNumber))
+
+          // Game Info
+          case "AN" => prop1(pSimpleText)
+          case "BR" => prop1(pSimpleText)
+          case "BT" => prop1(pSimpleText)
+          case "CP" => prop1(pSimpleText)
+          case "DT" => prop1(pSimpleText)
+          case "EV" => prop1(pSimpleText)
+          case "GN" => prop1(pSimpleText)
+          case "GC" => prop1(pText)
+          case "ON" => prop1(pSimpleText)
+          case "OT" => prop1(pSimpleText)
+          case "PB" => prop1(pSimpleText)
+          case "PC" => prop1(pSimpleText)
+          case "PW" => prop1(pSimpleText)
+          case "RE" => prop1(pSimpleText)
+          case "RO" => prop1(pSimpleText)
+          case "RU" => prop1(pSimpleText)
+          case "SO" => prop1(pSimpleText)
+          case "TM" => prop1(pReal)
+          case "US" => prop1(pSimpleText)
+          case "WR" => prop1(pSimpleText)
+          case "WT" => prop1(pSimpleText)
+
+          // Timing
           case "BL" => prop1(pReal)
           case "OB" => prop1(pNumber)
           case "OW" => prop1(pNumber)
           case "WL" => prop1(pReal)
 
-          // Markup
-          case "AR" => propList(pCompose(pPoint, pPoint))
-          case "CR" => propList(pPoint)
-          case "VW" => propList(pCompose(pPoint, pSimpleText))
-          case "LN" => propList(pCompose(pPoint, pPoint))
-          case "NA" => propList(pPoint)
-          case "SL" => propList(pPoint)
-          case "SQ" => propList(pPoint)
-          case "TR" => propList(pPoint)
+          // Misc
+          case "FG" => propNone | prop1(pCompose(pNumber, pSimpleText))
+          case "PM" => prop1(pNumber)
+          case "VM" => propElistOfPoint
+         
+          // Go specific
+          case "HA" => prop1(pNumber)
+          case "KM" => prop1(pReal)
+          case "TB" => propElistOfPoint
+          case "TW" => propElistOfPoint
         }
       }
     }
 
-  def pSimpleText = """\w+""".r ^^ { SimpleText(_) }
-  def pNone = "" ^^ { _ => None }
+  def pCompose[A <: ValueType, B <: ValueType](pa: Parser[A], pb: Parser[B]) = pa ~ ":" ~ pb ^^ { case x ~ ":" ~ y => Compose(x, y) }
+
+  // def pNone = "" ^^ { _ => None }
   def pUcLetter = """[A-Z]""".r
   def pDigit = """[0-9]""".r
   def pNumber_ = ("+"|"-"|"") ~ rep1(pDigit) ^^ {
@@ -72,12 +149,17 @@ class SGF extends RegexParsers {
   }
   def pDouble = ("1"|"2") ^^ { case x => Double(x.toInt) }
   def pColor = ("B"|"W") ^^ { case x => Color(x.charAt(0)) }
+  def pSimpleText = """\w+""".r ^^ { SimpleText(_) }
+  def pText = """\w+""".r ^^ { Text(_) } // FIXME
   def pPoint = repN(2, """([a-z]|[A-Z])""".r) ^^ { case List(a, b) => Point(a.head, b.head) }
-  def intsof(p: Point) = {
+  def intsof(p: Point): (Int, Int) = {
     val Point(x, y) = p
-    (x-'a', y-'a')
+    (x-'a'+1, y-'a'+1)
   }
-  def pCompose[A <: ValueType, B <: ValueType](pa: Parser[A], pb: Parser[B]) = pa ~ ":" ~ pb ^^ { case x ~ ":" ~ y => Compose(x, y) }
+  def pointof(p: (Int, Int)): Point = {
+    val (x, y) = p
+    Point(('a'+x-1).toChar, ('a'+y-1).toChar)
+  }
 }
 
 package sgf {
@@ -94,7 +176,7 @@ package sgf {
   trait ValueType extends CValueType
   case class Compose(a: ValueType, b: ValueType) extends CValueType
 
-  case object None extends ValueType
+  // case object None extends ValueType
   case class Number(a: Int) extends ValueType
   case class Real(a: Float) extends ValueType
   case class Double(a: Int) extends ValueType
@@ -102,22 +184,25 @@ package sgf {
   case class SimpleText(a: String) extends ValueType
   case class Text(a: String) extends ValueType
   case class Point(a: Char, b: Char) extends ValueType
-  case class Move() extends ValueType
-  case class Stone() extends ValueType
+  // In Go, Point, Move and Stone are the same
+  // case class Move() extends ValueType
+  // case class Stone() extends ValueType
 }
 
 object SGF extends SGF {
   def main(args: Array[String]) = {
-    println(parseAll(pNone, ""))
+    // println(parseAll(pNone, ""))
     println(parseAll(pDouble, "2"))
     println(parseAll(pColor, "W"))
     println(parseAll(pNumber, "-23"))
     println(parseAll(pReal, "3.14"))
     // println(parseAll(pAll, "00"))
+    println(parse(pProperty, "KO[]"))
     println(parse(pProperty, "AB[ab][cd]"))
     println(parse(pPoint, "ab"))
     println(parse(pPropIdent, "KM[+0.5]"))
     println(parseAll(pProperty, "KM[+0.5]"))
     println(parseAll(pAll, "(;KM[+0.5])"))
+    println(parseAll(pProperty, "AB[aa:bb]"))
   }
 }
