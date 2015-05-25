@@ -31,21 +31,21 @@ class SGF extends RegexParsers {
         //     Property(pid, xs.map { case x => PropValue(pointof(x)) })
         //   }
         // }
-        def propCompressedListOfPoint = prop1(pCompose(pPoint, pPoint))
-        def propListOfPoint = propCompressedListOfPoint | propList(pPoint) 
-        def propElistOfPoint = propCompressedListOfPoint | propElist(pPoint)
+        def pCompressedPoint = pCompose(pPoint, pPoint)
+        def propListOfPoint = propList(pCompressedPoint | pPoint) 
+        def propElistOfPoint = propElist(pCompressedPoint | pPoint)
         def propUnknown = {
           def pSkip = """(\w)*""".r ^^ { _ => Unknown }
           propElist(pSkip) | prop1(pSkip)
         }
         id match {
           // Move
-          case "B" => prop1(pPoint)
+          case "B" => propNone | prop1(pPoint) // B[] means pass
           // case "KO" => pNone ^^ { case _ => Property(pid, List()) }
           // case "KO" => prop1(pNone) // List(None) or List()?
           case "KO" => propNone
           case "NM" => prop1(pNumber)
-          case "W" => prop1(pPoint)
+          case "W" => propNone | prop1(pPoint)
 
           // Setup
           case "AB" => propListOfPoint
