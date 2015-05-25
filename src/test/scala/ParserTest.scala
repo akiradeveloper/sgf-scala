@@ -18,11 +18,11 @@ class PropertyTest extends FunSuite {
   test("B") {
     t("B[ ac]", Point('a','c'))
   }
-  test("VM") { // elist of point
-    t("VM[]")
-    t("VM[  ]")
-    t("VM[ab ][ AB ]", Point('a','b'), Point('A','B'))
-    t("VM[ az:CD]", Compose(Point('a','z'), Point('C','D')))
+  test("VW") { // elist of point
+    t("VW[]")
+    t("VW[  ]")
+    t("VW[ab ][ AB ]", Point('a','b'), Point('A','B'))
+    t("VW[ az:CD]", Compose(Point('a','z'), Point('C','D')))
   }
   test("KO") {
     t("KO[     ]")
